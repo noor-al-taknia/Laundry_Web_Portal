@@ -20,6 +20,7 @@ export default function HotelWorkspace({ data, locale, onChanged, onPrintInvoice
   const [showHotelResults, setShowHotelResults] = useState(!draft.hotel);
   const [recordSearch, setRecordSearch] = useState("");
   const [hotels, setHotels] = useState<HotelCustomer[]>([]);
+  const [hotelCatalog, setHotelCatalog] = useState<BootstrapData["catalog"]>([]);
   const [hotelTotal, setHotelTotal] = useState(0);
   const [directoryPage, setDirectoryPage] = useState(1);
   const [directoryLoading, setDirectoryLoading] = useState(true);
@@ -43,11 +44,17 @@ export default function HotelWorkspace({ data, locale, onChanged, onPrintInvoice
   const [directoryEdit, setDirectoryEdit] = useState<HotelCustomer | "new" | null>(null);
   const hotelId = draft.ownerId === data.user.id ? draft.hotel?.id : undefined;
   const allowed = (operation: string) => data.user.role === "admin" || data.staffAccess?.capabilities[operation] !== false;
-  const categories = data.catalog.filter((category) => category.isActive);
+  const categories = (hotelId ? hotelCatalog : []).filter((category) => category.isActive);
   const category = categories.find((entry) => entry.id === categoryId) ?? categories[0];
   const totals = useMemo(() => hotelDraftTotals(draft.cart), [draft.cart]);
 
   useEffect(() => { useHotelStore.getState().bindUser(data.user.id); }, [data.user.id]);
+
+  useEffect(() => {
+    if (!error && !notice) return;
+    const timeout = window.setTimeout(() => { setError(""); setNotice(""); }, 3000);
+    return () => window.clearTimeout(timeout);
+  }, [error, notice]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -61,6 +68,15 @@ export default function HotelWorkspace({ data, locale, onChanged, onPrintInvoice
     }, 200);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [search, directoryPage, reload, tab, data.user.id]);
+
+  useEffect(() => {
+    if (!hotelId) return;
+    const controller = new AbortController();
+    void api<{ catalog: BootstrapData["catalog"] }>(`/api/hotel-catalog?hotelId=${hotelId}`, { signal: controller.signal })
+      .then((result) => { setHotelCatalog(result.catalog); setCategoryId((current) => result.catalog.some((entry) => entry.id === current) ? current : result.catalog[0]?.id ?? null); })
+      .catch((caught) => { if (!controller.signal.aborted) setError(caught instanceof Error ? caught.message : "Unable to load this hotel’s price list"); });
+    return () => controller.abort();
+  }, [hotelId]);
 
   useEffect(() => {
     if (!hotelId || tab === "directory") return;
@@ -132,7 +148,7 @@ export default function HotelWorkspace({ data, locale, onChanged, onPrintInvoice
   return <section className="hotel-workspace" dir={locale === "ar" ? "rtl" : "ltr"}>
     <header className="hotel-heading"><div><span className="hotel-tag">{tr(locale,"HOTELS","الفنادق")}</span><h2>{tr(locale,"Hotel billing","فواتير الفنادق")}</h2><p>{tr(locale,"Separate hotel accounts. Walk-in orders and collections are not shown here.","حسابات مستقلة للفنادق. لا تظهر هنا طلبات وتحصيلات العملاء المباشرين.")}</p></div>{toolbar}</header>
     {error && <div className="hotel-notice error" role="alert">{error}<button onClick={() => setError("")} aria-label={tr(locale,"Dismiss","إغلاق")}>×</button></div>}
-    {notice && <div className="hotel-notice" role="status">{notice}</div>}
+    {notice && <div className="hotel-success-modal" role="status"><strong>{tr(locale,"Saved successfully","تم الحفظ بنجاح")}</strong><span>{notice}</span></div>}
     <div className="hotel-selector"><label>{tr(locale,"Find hotel by code or name","ابحث عن الفندق بالرمز أو الاسم")}<input value={search} onFocus={() => setShowHotelResults(true)} onChange={(event) => { setSearch(event.target.value); setDirectoryPage(1); setShowHotelResults(true); }} placeholder={tr(locale,"Enter hotel code…","أدخل رمز الفندق…")} /></label>
       {showHotelResults && tab !== "directory" && <div className="hotel-search-results" aria-busy={directoryLoading}>{directoryLoading ? <LoadingRows /> : hotels.filter((hotel) => hotel.isActive).map((hotel) => <button type="button" key={hotel.id} aria-pressed={hotel.id === hotelId} onClick={() => chooseHotel(hotel)}><b>{hotel.code}</b><span>{hotel.name}</span></button>)}</div>}
       {showHotelResults && !directoryLoading && !hotels.length && <p>{tr(locale,"No hotel found. Ask the administrator to add it to the hotel directory.","لم يُعثر على الفندق. اطلب من الإدارة إضافته إلى دليل الفنادق.")}</p>}
@@ -144,7 +160,7 @@ export default function HotelWorkspace({ data, locale, onChanged, onPrintInvoice
       <button aria-pressed={tab === "invoices"} onClick={() => { setTab("invoices"); setPage(1); }}>{tr(locale,"Invoices","الفواتير")}</button>
       {data.user.role === "admin" && <button aria-pressed={tab === "directory"} onClick={() => setTab("directory")}>{tr(locale,"Hotel directory","دليل الفنادق")}</button>}
     </nav>
-    {tab === "directory" && data.user.role === "admin" ? <section className="hotel-panel"><header><h3>{tr(locale,"Hotel directory","دليل الفنادق")} ({hotelTotal})</h3><button className="hotel-primary" onClick={() => setDirectoryEdit("new")}>{tr(locale,"Add hotel","إضافة فندق")}</button></header><div className="hotel-table"><table><thead><tr><th>{tr(locale,"Code","الرمز")}</th><th>{tr(locale,"Name / address","الاسم / العنوان")}</th><th>{tr(locale,"VAT number","الرقم الضريبي")}</th><th>{tr(locale,"Status","الحالة")}</th><th>{tr(locale,"Action","الإجراء")}</th></tr></thead><tbody>{hotels.map((hotel) => <tr key={hotel.id}><td>{hotel.code}</td><td><b>{hotel.name}</b><small>{hotel.address}</small></td><td>{hotel.vatNumber}</td><td>{hotel.isActive ? tr(locale,"Active","نشط") : tr(locale,"Inactive","غير نشط")}</td><td><button onClick={() => setDirectoryEdit(hotel)}>{tr(locale,"Edit","تعديل")}</button></td></tr>)}</tbody></table></div></section> : !hotelId ? <div className="hotel-empty">{tr(locale,"Choose a hotel above to continue.","اختر فندقاً أعلاه للمتابعة.")}</div> : <>
+    {tab === "directory" && data.user.role === "admin" ? <section className="hotel-panel"><header><h3>{tr(locale,"Hotel directory","دليل الفنادق")} ({hotelTotal})</h3><button className="hotel-primary" onClick={() => setDirectoryEdit("new")}>{tr(locale,"Add hotel","إضافة فندق")}</button></header><div className="hotel-table"><table><thead><tr><th>{tr(locale,"Code","الرمز")}</th><th>{tr(locale,"Name / address","الاسم / العنوان")}</th><th>{tr(locale,"VAT number","الرقم الضريبي")}</th><th>{tr(locale,"Status","الحالة")}</th><th>{tr(locale,"Action","الإجراء")}</th></tr></thead><tbody>{hotels.map((hotel) => <tr key={hotel.id}><td>{hotel.code}</td><td><b>{hotel.name}</b><small>{hotel.address}</small></td><td>{hotel.vatNumber}</td><td>{hotel.isActive ? tr(locale,"Active","نشط") : tr(locale,"Inactive","غير نشط")}</td><td><button onClick={() => setDirectoryEdit(hotel)}>{tr(locale,"Edit","تعديل")}</button></td></tr>)}</tbody></table></div><Pagination page={directoryPage} total={hotelTotal} onPage={setDirectoryPage} locale={locale} /></section> : !hotelId ? <div className="hotel-empty">{tr(locale,"Choose a hotel above to continue.","اختر فندقاً أعلاه للمتابعة.")}</div> : <>
       {tab === "deliveries" && allowed("hotels.create") && <section className="hotel-panel"><header><div><h3>{tr(locale,"New hotel delivery","تسليم جديد للفندق")}</h3><small>{tr(locale,"Each delivery creates its own A4 invoice. Issued items and rates are locked.","لكل تسليم فاتورة A4 مستقلة. تُقفل العناصر والأسعار بعد الإصدار.")}</small></div></header>
         <div className="hotel-form-grid"><label>{tr(locale,"Delivery date","تاريخ التسليم")}<input type="date" max={today()} value={deliveryDate} onChange={(event) => setDeliveryDate(event.target.value)} /></label><label>{tr(locale,"Staff handling delivery","الموظف المسؤول")}<select value={assignedStaffId} onChange={(event) => setAssignedStaffId(Number(event.target.value))}><option value="0">{tr(locale,"Select staff","اختر الموظف")}</option>{data.staffUsers.map((staff) => <option key={staff.id} value={staff.id}>{staff.displayName}</option>)}</select></label></div>
         <div className="hotel-catalog"><div className="hotel-category-tabs">{categories.map((entry) => <button aria-pressed={category?.id === entry.id} style={{ borderColor: entry.color }} key={entry.id} onClick={() => setCategoryId(entry.id)}>{entry.name}</button>)}</div><div className="hotel-services">{category?.services.filter((service) => service.isActive && service.priceId !== null).map((service) => <button key={service.id} style={{ borderTopColor: category.color }} onClick={() => draft.addItem({ serviceId: service.id, serviceName: service.name, categoryName: category.name, categoryColor: category.color, unitPrice: service.price, quantity: 1 })}><b>{locale === "ar" && service.nameAr ? service.nameAr : service.name}</b><span>{money(service.price)}</span></button>)}</div></div>

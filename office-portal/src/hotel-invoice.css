@@ -1,34 +1,37 @@
 #hotel-print-host { display: none; }
-.hotel-invoice { width: 100%; max-width: 186mm; margin: 0 auto; background: #fff; color:#000; font: 11px/1.45 Arial, sans-serif; }
-.hotel-invoice h1 { font-size: 21px; margin:0 0 4px; }
-.hotel-invoice p { margin: 3px 0; }
-.hotel-invoice-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; }
-.hotel-invoice-heading > div:first-child { max-width: 65%; }
-.hotel-invoice-qr { text-align:center; flex-shrink:0; }
-.hotel-invoice-qr svg { display:block; }
-.hotel-invoice-qr span { font-size:9px; }
-.hotel-invoice-title { font-size:17px; text-align:center; margin:12px 0; }
-.hotel-invoice-meta { display:grid; grid-template-columns:1fr 1fr; border:1px solid #777; margin-bottom:12px; }
-.hotel-invoice-meta > div { display:flex; flex-direction:column; padding:6px 8px; border-bottom:1px solid #ccc; gap:2px; }
-.hotel-invoice-meta strong { overflow-wrap:anywhere; }
-.hotel-invoice-parties { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; align-items:start; }
-.hotel-invoice-parties section { border:1px solid #777; }
-.hotel-invoice h3 { margin:0; padding:5px 8px; font-size:12px; border-bottom:1px solid #777; background:#eef2f6; }
-.hotel-invoice dl { margin:0; display:grid; grid-template-columns:46% 54%; }
-.hotel-invoice dt,.hotel-invoice dd { margin:0; padding:4px 6px; border-bottom:1px solid #ddd; overflow-wrap:anywhere; }
+.hotel-invoice { width:186mm; min-height:273mm; margin:0 auto; padding:8mm 8mm 7mm; background:#fff; color:#111; font:10px/1.35 Arial,Tahoma,sans-serif; }
+.hotel-invoice h1 { font-size:24px; letter-spacing:.04em; margin:0 0 2px; }
+.hotel-invoice p { margin:2px 0; }
+.hotel-invoice-heading { align-items:flex-start; border-bottom:2px solid #111; display:flex; justify-content:space-between; min-height:33mm; padding-bottom:4mm; }
+.hotel-invoice-heading section:first-child { max-width:70%; }
+.hotel-invoice-heading b { font-size:13px; }
+.hotel-invoice-identity { align-items:center; display:flex; flex-direction:column; font-size:8px; text-align:center; }
+.hotel-invoice-identity svg { border:1px solid #222; padding:2px; }
+.hotel-invoice-title { align-items:center; border-bottom:1px solid #111; display:flex; font-size:14px; justify-content:space-between; margin:4mm 0 0; padding:3mm 0; text-transform:uppercase; }
+.hotel-invoice-meta { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid #222; margin:4mm 0; }
+.hotel-invoice-meta > div { border-inline-end:1px solid #999; display:flex; flex-direction:column; min-height:13mm; padding:2.5mm; gap:2px; }
+.hotel-invoice-meta > div:last-child { border:0; }
+.hotel-invoice-meta span,.hotel-invoice dt { color:#333; font-size:8px; font-weight:700; }
+.hotel-invoice-meta strong { font-size:10px; overflow-wrap:anywhere; }
+.hotel-invoice-parties { display:grid; grid-template-columns:1fr 1fr; gap:4mm; margin:4mm 0; align-items:stretch; }
+.hotel-invoice-parties section { border:1px solid #222; }
+.hotel-invoice h3 { background:#eef1f5; border-bottom:1px solid #222; font-size:11px; margin:0; padding:2.5mm; }
+.hotel-invoice dl { display:grid; grid-template-columns:42% 58%; margin:0; }
+.hotel-invoice dt,.hotel-invoice dd { border-bottom:1px solid #ddd; margin:0; min-height:7mm; overflow-wrap:anywhere; padding:1.6mm 2mm; }
 .hotel-invoice dd { font-weight:600; }
 .hotel-invoice-lines { border-collapse:collapse; width:100%; table-layout:fixed; }
-.hotel-invoice-lines th,.hotel-invoice-lines td { border:1px solid #999; padding:5px; text-align:right; vertical-align:top; overflow-wrap:anywhere; font-size:10px; }
-.hotel-invoice-lines th { background:#eef2f6; text-align:center; }
-.hotel-invoice-lines th:first-child,.hotel-invoice-lines td:first-child { width:30%; text-align:left; }
-.hotel-invoice-lines small { display:block; color:#333; font-size:8px; }
-.hotel-invoice-bottom { display:grid; grid-template-columns:35% 65%; margin-top:12px; gap:0; break-inside:avoid; }
-.hotel-invoice-bottom > p { padding:6px; }
-.hotel-invoice-bottom dl { grid-template-columns:75% 25%; border:1px solid #777; }
+.hotel-invoice-lines th,.hotel-invoice-lines td { border:1px solid #333; padding:2mm 1.5mm; text-align:right; vertical-align:top; overflow-wrap:anywhere; font-size:9px; }
+.hotel-invoice-lines th { background:#edf0f4; font-size:8px; text-align:center; }
+.hotel-invoice-lines th:first-child,.hotel-invoice-lines td:first-child { width:28%; text-align:left; }
+.hotel-invoice-lines small { display:block; color:#333; font-size:7px; margin-top:1mm; }
+.hotel-invoice-bottom { display:grid; grid-template-columns:40% 60%; margin-top:4mm; gap:0; break-inside:avoid; }
+.hotel-invoice-bottom > p { align-self:end; padding:3mm; }
+.hotel-invoice-bottom dl { grid-template-columns:72% 28%; border:1px solid #222; }
 .hotel-invoice-bottom dd { text-align:right; }
 .hotel-invoice .grand { font-weight:800; font-size:12px; border-top:2px solid #000; }
-.hotel-invoice footer { border-top:1px solid #999; margin-top:14px; padding-top:8px; text-align:center; break-inside:avoid; }
-@page hotel-monthly { size: A4 portrait; margin: 12mm; }
+.hotel-invoice footer { border-top:1px solid #222; font-size:9px; margin-top:6mm; padding-top:3mm; text-align:center; break-inside:avoid; }
+.hotel-invoice footer p:nth-child(2),.hotel-invoice footer p:nth-child(3) { font-weight:700; margin-top:2mm; }
+@page hotel-monthly { size:A4 portrait; margin:0; }
 @media print {
   body:has(#hotel-print-host) { margin:0!important; padding:0!important; background:white!important; height:auto!important; overflow:visible!important; }
   body:has(#hotel-print-host) > :not(#hotel-print-host) { display:none!important; }

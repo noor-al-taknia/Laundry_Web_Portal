@@ -6,6 +6,12 @@ Each new hotel delivery has its own A4 tax invoice. The month is only a reportin
 
 Hotel customers, deliveries, invoice lines, payments and audit history use separate hotel_* tables. They never insert walk-in customers or orders. The service catalog and staff identities are shared references; a bill-specific rate never changes the catalog price.
 
+The hotel directory is paginated and includes all 53 approved hotel records.
+After selecting a hotel, the service buttons show that hotel’s configured
+rates. A rate edit applies only to the unsaved delivery. Every hotel delivery
+prints as its own A4 VAT invoice with the saved hotel name/code and a bilingual
+notice requiring clearance within 25 days. Walk-in receipts are unchanged.
+
 ## Save and print
 
 Staff select a hotel by code/name, select the responsible staff member, and enter service quantities and rates. Save bill first creates an idempotent delivery, then issues its invoice. Save & print also opens the native browser print dialog after the A4 receipt and QR are ready.
