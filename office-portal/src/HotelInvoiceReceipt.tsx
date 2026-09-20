@@ -1,0 +1,38 @@
+"use client";
+
+import { QRCodeSVG } from "qrcode.react";
+import type { HotelInvoice } from "../../contracts/src/hotels";
+import { vatQrPayload } from "../../lib/invoice";
+import "./hotel-invoice.css";
+
+const amount = (value: number) => value.toFixed(2);
+export default function HotelInvoiceReceipt({ invoice }: { invoice: HotelInvoice }) {
+  const { hotel, seller } = invoice;
+  const qr = vatQrPayload({ seller: seller.shopName, vatNumber: seller.vatNumber, timestamp: invoice.issuedAt, total: invoice.totalAmount, vat: invoice.vatAmount });
+  return <article className="hotel-invoice" dir="ltr" lang="en">
+    <header className="hotel-invoice-heading">
+      <div><h1>{seller.shopName}</h1><strong dir="rtl">{seller.shopNameAr}</strong><p>{seller.address}</p><p>{seller.phone}</p><p>VAT / الرقم الضريبي: {seller.vatNumber}</p>{seller.commercialNumber && <p>CR / السجل التجاري: {seller.commercialNumber}</p>}</div>
+      <div className="hotel-invoice-qr"><QRCodeSVG value={qr} size={120} level="M" marginSize={2} /><span>Invoice QR / رمز الفاتورة</span></div>
+    </header>
+    <h2 className="hotel-invoice-title">Tax invoice / فاتورة ضريبية</h2>
+    <div className="hotel-invoice-meta">
+      <div><span>Invoice number / رقم الفاتورة</span><strong>{invoice.invoiceNumber}</strong></div>
+      <div><span>Issue date / تاريخ الإصدار</span><strong>{new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Riyadh",dateStyle:"medium",timeStyle:"short"}).format(new Date(invoice.issuedAt))}</strong></div>
+      <div><span>{invoice.deliveryId ? "Delivery date / تاريخ التسليم" : "Billing month / شهر الفاتورة"}</span><strong>{invoice.deliveryId ? invoice.items[0]?.deliveryDate : invoice.month}</strong></div>
+      <div><span>Customer type / نوع العميل</span><strong>Hotels / فنادق · {hotel.code}</strong></div>
+    </div>
+    <div className="hotel-invoice-parties">
+      <section><h3>Seller / المورد</h3><dl><dt>Name / الاسم</dt><dd>{seller.shopName}<br/><span dir="rtl">{seller.shopNameAr}</span></dd><dt>Address / العنوان</dt><dd>{seller.address || "—"}</dd><dt>VAT / الرقم الضريبي</dt><dd>{seller.vatNumber}</dd><dt>Contact / رقم الاتصال</dt><dd>{seller.phone || "—"}</dd></dl></section>
+      <section><h3>Buyer / العميل</h3><dl><dt>Name / الاسم</dt><dd dir="auto">{hotel.name}</dd><dt>Code / الرمز</dt><dd>{hotel.code}</dd><dt>Address / العنوان</dt><dd dir="auto">{hotel.address || "—"}</dd><dt>Postal code / الرمز البريدي</dt><dd>{hotel.postalCode || "—"}</dd><dt>Additional no. / الرقم الإضافي</dt><dd>{hotel.additionalNumber || "—"}</dd><dt>VAT / الرقم الضريبي</dt><dd>{hotel.vatNumber || "—"}</dd><dt>Other ID / معرف آخر</dt><dd>{hotel.otherId || "—"}</dd><dt>Contact / رقم الاتصال</dt><dd>{hotel.phone || "—"}</dd></dl></section>
+    </div>
+    <table className="hotel-invoice-lines">
+      <thead><tr><th>Service / الخدمة</th><th>Rate<br/>السعر</th><th>Qty<br/>الكمية</th><th>Taxable<br/>المبلغ الخاضع</th><th>Discount<br/>الخصم</th><th>VAT %<br/>نسبة الضريبة</th><th>VAT<br/>الضريبة</th><th>Total<br/>الإجمالي</th></tr></thead>
+      <tbody>{invoice.items.map((item,index)=><tr key={item.id ?? index}><td><strong>{item.serviceName}</strong><small>{item.deliveryDate} · {item.token}</small></td><td>{amount(item.unitPrice)}</td><td>{item.quantity}</td><td>{amount(item.taxableAmount)}</td><td>0.00</td><td>15%</td><td>{amount(item.vatAmount)}</td><td>{amount(item.totalAmount)}</td></tr>)}</tbody>
+    </table>
+    <div className="hotel-invoice-bottom">
+      <p>Amounts in Saudi Riyals (SAR).<br/>جميع المبالغ بالريال السعودي<br/>Delivery references above identify the supply dates.<br/>تواريخ التوريد موضحة في بنود التسليم أعلاه</p>
+      <dl><dt>Total excluding VAT / الإجمالي قبل الضريبة</dt><dd>{amount(invoice.subtotal)}</dd><dt>Discount / الخصم</dt><dd>0.00</dd><dt>VAT 15% / ضريبة القيمة المضافة</dt><dd>{amount(invoice.vatAmount)}</dd><dt className="grand">Total including VAT / الإجمالي</dt><dd className="grand">{amount(invoice.totalAmount)}</dd><dt>Paid / المدفوع</dt><dd>{amount(invoice.amountPaid)}</dd><dt>Balance / المتبقي</dt><dd>{amount(invoice.balance)}</dd></dl>
+    </div>
+    <footer>{seller.receiptFooter || "Thank you for choosing our laundry service."}</footer>
+  </article>;
+}
